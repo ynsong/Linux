@@ -1,0 +1,21 @@
+#!/bin/bash
+if [ ${#} -ne 2 ]; then
+	echo "Invalid number of command line arguments" >&2
+	exit 1
+fi
+
+for stem in $(cat "$1"); do
+	if [ -r  ${stem}.args ]; then
+		arg=$(cat ${stem}.args)	
+        	if [ -r ${stem}.in ]; then
+                	$2 $arg <  "${stem}.in" > "${stem}.out"
+		else 
+			$2 $arg  > "${stem}.out"
+		fi
+	elif [ -r ${stem}.in ]; then
+                $2 <  "${stem}.in" > "${stem}.out"
+	else
+		 $2 > "${stem}.out"
+	fi
+
+done	

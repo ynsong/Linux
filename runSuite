@@ -1,0 +1,46 @@
+#!/bin/bash
+if [ ${#} -ne 2 ]; then
+	echo 'Incorrect number of command line arguments' >&2
+	exit 1
+fi
+
+for stem in $(cat "$1"); do
+	if [ ! -r "${stem}.out" ]; then
+		echo "Missing or unreadable ${stem}.out file" >&2
+		exit 1
+	fi
+
+        progOut=$(mktemp ${stem}.XXX)
+	if [ -r  ${stem}.args ]; then
+                arg=$(cat ${stem}.args)
+                if [ -r ${stem}.in ]; then
+                        $2 $arg <  "${stem}.in" > "$progOut"
+                else
+                        $2 $arg  > "$progOut"
+                fi
+        elif [ -r ${stem}.in ]; then
+                $2 <  "${stem}.in" > "$progOut"
+        else
+                 $2 > "$progOut"
+        fi
+
+
+	cmp -s "${stem}.out" "$progOut" 
+	
+	if [ $? -ne 0 ] ; then
+		echo "Test failed: $stem"
+		echo "Args:"
+		if [ -r ${stem}.args ]; then
+			cat ${stem}.args
+		fi
+		echo "Input:"
+		if [ -r ${stem}.in ]; then
+			cat <  ${stem}.in
+		fi
+		echo "Expected:"
+		cat ${stem}.out
+		echo "Actual:"
+		cat $progOut
+	fi
+	rm $progOut
+done
